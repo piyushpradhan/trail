@@ -1,0 +1,105 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: 'dist/Trail Setup *.exe'
+            asset_name: trail-windows-x64-setup.exe
+          - os: macos-latest
+            artifact: 'dist/Trail-*.dmg'
+            asset_name: trail-macos-arm64.dmg
+          - os: ubuntu-latest
+            artifact: 'dist/Trail-*.AppImage'
+            asset_name: trail-linux-x86_64.AppImage
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Package
+        run: npm run package
+        env:
+          # electron-builder reads these — leaving empty disables signing/notarization.
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Locate artifact
+        id: locate
+        shell: bash
+        run: |
+          shopt -s nullglob
+          files=( ${{ matrix.artifact }} )
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No artifact found matching: ${{ matrix.artifact }}"
+            ls -la dist/ || true
+            exit 1
+          fi
+          src="${files[0]}"
+          dst="dist/${{ matrix.asset_name }}"
+          cp "$src" "$dst"
+          echo "path=$dst" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ steps.locate.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -la artifacts/
+
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          # If release exists, upload assets. Otherwise create with auto-generated notes.
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag exists — uploading assets (clobber)"
+            gh release upload "$tag" artifacts/* --clobber
+          else
+            echo "Creating release $tag"
+            gh release create "$tag" \
+              --title "$tag" \
+              --generate-notes \
+              artifacts/*
+          fi

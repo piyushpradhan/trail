@@ -1,5 +1,9 @@
 # Trail
 
+[![CI](https://github.com/piyushpradhan/trail/actions/workflows/ci.yml/badge.svg)](https://github.com/piyushpradhan/trail/actions/workflows/ci.yml)
+[![Release](https://github.com/piyushpradhan/trail/actions/workflows/release.yml/badge.svg)](https://github.com/piyushpradhan/trail/actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Menubar task tracker that watches everywhere you start work — GitHub PRs and issues, AI coding sessions (Claude Code, Codex, OpenCode), terminal shells, tmux — and keeps you honest about what you've actually finished.
 
 The problem this solves: you start three tasks before lunch, pick up two more after, and at 5pm you've forgotten about the PR you said you'd test "just in case it breaks." Trail keeps a running ledger of everything you started, what state it's in, and which ones have gone stale.

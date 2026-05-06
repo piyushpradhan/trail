@@ -49,10 +49,17 @@
       { "from": "resources/hooks", "to": "hooks" }
     ],
     "mac": {
-      "category": "public.app-category.productivity"
+      "category": "public.app-category.productivity",
+      "target": [
+        { "target": "dmg", "arch": ["arm64"] }
+      ]
     },
     "win": {
       "target": "nsis"
+    },
+    "linux": {
+      "category": "Utility",
+      "target": ["AppImage"]
     }
   }
 }

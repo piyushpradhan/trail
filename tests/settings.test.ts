@@ -62,6 +62,36 @@ describe('settings — GitHub', () => {
   });
 });
 
+describe('settings — Linear', () => {
+  beforeEach(() => {
+    settings.clearLinearToken();
+  });
+
+  it('defaults', () => {
+    const cfg = settings.getLinear();
+    expect(cfg.enabled).toBe(true);
+    expect(cfg.hasToken).toBe(false);
+    expect(cfg.teamFilter).toEqual([]);
+  });
+
+  it('persists token + team filter', () => {
+    settings.setLinearToken('lin_api_xyz');
+    settings.setLinearTeamFilter(['ENG', 'INFRA']);
+    settings.setLinearEnabled(false);
+    const cfg = settings.getLinear();
+    expect(cfg.hasToken).toBe(true);
+    expect(cfg.enabled).toBe(false);
+    expect(cfg.teamFilter).toEqual(['ENG', 'INFRA']);
+    expect(settings.getLinearToken()).toBe('lin_api_xyz');
+  });
+
+  it('empty token clears', () => {
+    settings.setLinearToken('x');
+    settings.setLinearToken('');
+    expect(settings.hasLinearToken()).toBe(false);
+  });
+});
+
 describe('settings — reconciler', () => {
   it('defaults are sensible', () => {
     const r = settings.getReconciler();

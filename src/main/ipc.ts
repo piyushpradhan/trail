@@ -3,6 +3,7 @@ import { tasksRepo, eventsRepo } from './db.js';
 import { collectors, runAllCollectors, type CollectorName } from './collectors/index.js';
 import { runReconciler } from './reconciler.js';
 import { diagnoseGithub } from './collectors/github.js';
+import { diagnoseLinear } from './collectors/linear.js';
 import { diagnoseTerminal } from './collectors/terminal.js';
 import { HOOK_PORT } from './hookServer.js';
 import { join } from 'node:path';
@@ -75,6 +76,7 @@ export function registerIpc(onChange: () => void): void {
     hasApiKey: settings.hasApiKey(),
     reconciler: settings.getReconciler(),
     github: settings.getGithub(),
+    linear: settings.getLinear(),
   }));
 
   ipcMain.handle('settings:setApiKey', wrap((key: string) => settings.setApiKey(key)));
@@ -92,6 +94,16 @@ export function registerIpc(onChange: () => void): void {
     settings.setGithubRepoFilters(include, exclude),
   ));
   ipcMain.handle('settings:diagnoseGithub', () => diagnoseGithub());
+
+  ipcMain.handle('settings:setLinearToken', wrap((token: string) => settings.setLinearToken(token)));
+  ipcMain.handle('settings:clearLinearToken', wrap(() => settings.clearLinearToken()));
+  ipcMain.handle('settings:setLinearEnabled', wrap((enabled: boolean) =>
+    settings.setLinearEnabled(enabled),
+  ));
+  ipcMain.handle('settings:setLinearTeamFilter', wrap((teams: string[]) =>
+    settings.setLinearTeamFilter(teams),
+  ));
+  ipcMain.handle('settings:diagnoseLinear', () => diagnoseLinear());
   ipcMain.handle('settings:diagnoseTerminal', () => diagnoseTerminal());
 
   ipcMain.handle('settings:getHookInfo', () => {

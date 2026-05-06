@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import type { GithubStatus, SettingsSnapshot, TerminalDiagnostic } from '@shared/types';
+import type { GithubStatus, LinearStatus, SettingsSnapshot, TerminalDiagnostic } from '@shared/types';
 
 interface Props {
   open: boolean;
@@ -27,11 +27,18 @@ export function Settings({ open, onClose }: Props): JSX.Element | null {
   // Shell hook
   const [hookInfo, setHookInfo] = useState<{ port: number; psScriptPath: string; shScriptPath: string } | null>(null);
 
+  // Linear-specific
+  const [linearToken, setLinearToken] = useState('');
+  const [linearStatus, setLinearStatus] = useState<LinearStatus | null>(null);
+  const [linearTesting, setLinearTesting] = useState(false);
+  const [linearTeamDraft, setLinearTeamDraft] = useState('');
+
   const refresh = async () => {
     const s = await window.trail.settings.get();
     setSnapshot(s);
     setGhIncludeDraft(s.github.repoInclude.join(', '));
     setGhExcludeDraft(s.github.repoExclude.join(', '));
+    setLinearTeamDraft(s.linear.teamFilter.join(', '));
   };
 
   useEffect(() => {
@@ -49,6 +56,9 @@ export function Settings({ open, onClose }: Props): JSX.Element | null {
       .catch(() => undefined);
     void Promise.resolve(window.trail.settings.getHookInfo?.())
       .then((s) => s && setHookInfo(s))
+      .catch(() => undefined);
+    void Promise.resolve(window.trail.settings.diagnoseLinear?.())
+      .then((s) => s && setLinearStatus(s))
       .catch(() => undefined);
   }, [open]);
 
@@ -155,6 +165,51 @@ export function Settings({ open, onClose }: Props): JSX.Element | null {
       setTermDiag(await window.trail.settings.diagnoseTerminal());
     } catch (err) {
       setStatus(`Terminal sync failed: ${(err as Error).message}`);
+    }
+  };
+
+  // ---- Linear ----
+  const saveLinearToken = async () => {
+    if (!linearToken.trim()) return;
+    await window.trail.settings.setLinearToken(linearToken.trim());
+    setLinearToken('');
+    await refresh();
+    setLinearStatus(await window.trail.settings.diagnoseLinear());
+  };
+
+  const clearLinearToken = async () => {
+    await window.trail.settings.clearLinearToken();
+    await refresh();
+    setLinearStatus(await window.trail.settings.diagnoseLinear());
+  };
+
+  const toggleLinear = async (enabled: boolean) => {
+    await window.trail.settings.setLinearEnabled(enabled);
+    await refresh();
+  };
+
+  const testLinear = async () => {
+    setLinearTesting(true);
+    try {
+      setLinearStatus(await window.trail.settings.diagnoseLinear());
+    } finally {
+      setLinearTesting(false);
+    }
+  };
+
+  const saveLinearTeams = async () => {
+    const teams = linearTeamDraft.split(',').map((s) => s.trim()).filter(Boolean);
+    await window.trail.settings.setLinearTeamFilter(teams);
+    await refresh();
+    setStatus('Linear team filter saved.');
+  };
+
+  const syncLinearNow = async () => {
+    try {
+      const r = await window.trail.collectors.runOne('linear');
+      setStatus(`Linear synced — ${r.created} new`);
+    } catch (err) {
+      setStatus(`Linear sync failed: ${(err as Error).message}`);
     }
   };
 
@@ -326,6 +381,78 @@ export function Settings({ open, onClose }: Props): JSX.Element | null {
                 Save filters
               </button>
               <button className="btn-primary" onClick={() => void syncGhNow()}>
+                Sync now
+              </button>
+            </div>
+          </div>
+
+          {/* Linear */}
+          <div className="settings-section">
+            <div className="settings-label">
+              <span className={`status-dot ${linearStatus ? (linearStatus.ok ? 'ok' : 'error') : 'unknown'}`} />
+              Linear
+            </div>
+            <div className="settings-sub">
+              {linearStatus
+                ? linearStatus.ok
+                  ? `Connected as ${linearStatus.user ?? '?'}${linearStatus.email ? ` (${linearStatus.email})` : ''}`
+                  : `Not connected: ${linearStatus.message ?? 'unknown'}`
+                : 'Loading…'}
+            </div>
+
+            <label className="settings-row">
+              <input
+                type="checkbox"
+                checked={snapshot?.linear.enabled ?? false}
+                onChange={(e) => void toggleLinear(e.target.checked)}
+              />
+              <span>Enabled</span>
+            </label>
+
+            {snapshot?.linear.hasToken ? (
+              <div className="settings-row">
+                <span className="settings-state ok">Token saved</span>
+                <button className="btn-ghost" onClick={() => void clearLinearToken()}>Remove</button>
+              </div>
+            ) : (
+              <div className="settings-row">
+                <input
+                  className="settings-input"
+                  type="password"
+                  placeholder="lin_api_…"
+                  value={linearToken}
+                  onChange={(e) => setLinearToken(e.target.value)}
+                />
+                <button
+                  className="btn-primary"
+                  onClick={() => void saveLinearToken()}
+                  disabled={!linearToken.trim()}
+                >
+                  Save
+                </button>
+              </div>
+            )}
+
+            <div className="settings-sub">
+              Get a personal API key at <code>linear.app/settings/api</code>.
+            </div>
+
+            <div className="settings-sub">Team filter (uppercase team keys, comma-separated)</div>
+            <input
+              className="settings-input"
+              placeholder="ENG, INFRA"
+              value={linearTeamDraft}
+              onChange={(e) => setLinearTeamDraft(e.target.value)}
+            />
+
+            <div className="settings-row">
+              <button className="btn-ghost" onClick={() => void testLinear()} disabled={linearTesting}>
+                {linearTesting ? 'Testing…' : 'Test connection'}
+              </button>
+              <button className="btn-ghost" onClick={() => void saveLinearTeams()}>
+                Save filter
+              </button>
+              <button className="btn-primary" onClick={() => void syncLinearNow()}>
                 Sync now
               </button>
             </div>

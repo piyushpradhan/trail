@@ -36,7 +36,7 @@ export function CommandPalette({ open, onClose, onOpenSettings }: Props): JSX.El
   }, [open]);
 
   const commands: Command[] = useMemo(() => {
-    const collectorNames = ['github', 'claude', 'codex', 'opencode', 'tmux', 'terminal'] as const;
+    const collectorNames = ['github', 'linear', 'claude', 'codex', 'opencode', 'tmux', 'terminal'] as const;
     const base: Command[] = [
       { id: 'sync', label: 'Sync all collectors', hint: 'All', group: 'Action', run: () => sync() },
       {

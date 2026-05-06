@@ -1,4 +1,5 @@
 import { runGithubCollector } from './github.js';
+import { runLinearCollector } from './linear.js';
 import { runClaudeCollector } from './claude.js';
 import { runCodexCollector } from './codex.js';
 import { runOpencodeCollector } from './opencode.js';
@@ -7,6 +8,7 @@ import { runTerminalCollector } from './terminal.js';
 
 export const collectors = {
   github: runGithubCollector,
+  linear: runLinearCollector,
   claude: runClaudeCollector,
   codex: runCodexCollector,
   opencode: runOpencodeCollector,

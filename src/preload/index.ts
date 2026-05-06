@@ -29,6 +29,11 @@ const api: TrailAPI = {
     setGithubRepoFilters: (include, exclude) =>
       ipcRenderer.invoke('settings:setGithubRepoFilters', include, exclude),
     diagnoseGithub: () => ipcRenderer.invoke('settings:diagnoseGithub'),
+    setLinearToken: (token) => ipcRenderer.invoke('settings:setLinearToken', token),
+    clearLinearToken: () => ipcRenderer.invoke('settings:clearLinearToken'),
+    setLinearEnabled: (enabled) => ipcRenderer.invoke('settings:setLinearEnabled', enabled),
+    setLinearTeamFilter: (teams) => ipcRenderer.invoke('settings:setLinearTeamFilter', teams),
+    diagnoseLinear: () => ipcRenderer.invoke('settings:diagnoseLinear'),
     diagnoseTerminal: () => ipcRenderer.invoke('settings:diagnoseTerminal'),
     getHookInfo: () => ipcRenderer.invoke('settings:getHookInfo'),
   },

@@ -14,6 +14,7 @@ The problem this solves: you start three tasks before lunch, pick up two more af
 
 - **Tray-only Linear-style UI** — popover toggled by `Ctrl+Shift+Space` (or click the tray icon).
 - **GitHub lifecycle tracking** — PRs auto-flip status: open → in_review, changes_requested → blocked, merged → done. Issues assigned to you become tasks.
+- **Linear lifecycle tracking** — assigned issues auto-flip status by Linear state type (started → in_progress, completed → done, canceled → blocked). Optional team-key filter.
 - **AI session collectors** — extracts candidate tasks from Claude Code (`~/.claude/projects/*.jsonl`), OpenAI Codex, OpenCode session logs.
 - **Terminal session detection** — tails PowerShell PSReadLine, bash/zsh/fish history, WSL distros. Optional shell hook (PowerShell + bash) that pings a local HTTP endpoint at session start so opening a new shell auto-creates a task tagged with repo + branch.
 - **LLM reconciler** — Haiku 4.5 second-pass over rejected prompts to dedupe and merge into existing tasks. Prompt caching enabled. Cost ~$0.005/run.
@@ -39,8 +40,9 @@ npm run package      # builds NSIS installer (Windows) / dmg (macOS)
 Open Settings (gear icon in popover header):
 
 1. **GitHub** — paste a PAT (`repo` + `read:user` scopes) or rely on `gh auth login`. Optional include/exclude repo filters.
-2. **Anthropic API key** — required only for the LLM reconciler. Stored encrypted via OS keychain.
-3. **Shell hook** — copy the displayed path into your `$PROFILE` (PowerShell) or `~/.bashrc` (bash/zsh) to track new shell sessions.
+2. **Linear** — paste a personal API key from `linear.app/settings/api`. Optional team-key filter (e.g. `ENG, INFRA`).
+3. **Anthropic API key** — required only for the LLM reconciler. Stored encrypted via OS keychain.
+4. **Shell hook** — copy the displayed path into your `$PROFILE` (PowerShell) or `~/.bashrc` (bash/zsh) to track new shell sessions.
 
 ## Architecture
 
@@ -53,7 +55,7 @@ src/
     hookServer.ts           # 127.0.0.1:47123 shell-hook endpoint
     nudge.ts                # EOD + morning notifications
     tray.ts                 # menu bar icon
-    collectors/             # github, claude, codex, opencode, terminal, tmux
+    collectors/             # github, linear, claude, codex, opencode, terminal, tmux
   preload/                  # context bridge
   renderer/                 # React UI (Linear-style)
   shared/                   # shared TS types

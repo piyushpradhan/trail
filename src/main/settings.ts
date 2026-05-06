@@ -10,6 +10,9 @@ interface Schema {
   githubRepoInclude: string[]; // substring match against owner/name
   githubRepoExclude: string[];
   githubEnabled: boolean;
+  linearTokenEncrypted?: string;
+  linearTeamFilter: string[]; // team key match (substring), empty = all teams
+  linearEnabled: boolean;
 }
 
 const store = new Store<Schema>({
@@ -20,6 +23,8 @@ const store = new Store<Schema>({
     githubRepoInclude: [],
     githubRepoExclude: [],
     githubEnabled: true,
+    linearTeamFilter: [],
+    linearEnabled: true,
   },
 });
 
@@ -120,5 +125,53 @@ export const settings = {
   setGithubRepoFilters(include: string[], exclude: string[]): void {
     store.set('githubRepoInclude', include);
     store.set('githubRepoExclude', exclude);
+  },
+
+  // Linear
+  hasLinearToken(): boolean {
+    return !!store.get('linearTokenEncrypted');
+  },
+
+  getLinearToken(): string | null {
+    const enc = store.get('linearTokenEncrypted');
+    if (!enc) return null;
+    if (!safeStorage.isEncryptionAvailable()) return null;
+    try {
+      return safeStorage.decryptString(Buffer.from(enc, 'base64'));
+    } catch {
+      return null;
+    }
+  },
+
+  setLinearToken(token: string): void {
+    if (!token) {
+      store.delete('linearTokenEncrypted');
+      return;
+    }
+    if (!safeStorage.isEncryptionAvailable()) {
+      throw new Error('Secure storage unavailable on this system');
+    }
+    const enc = safeStorage.encryptString(token).toString('base64');
+    store.set('linearTokenEncrypted', enc);
+  },
+
+  clearLinearToken(): void {
+    store.delete('linearTokenEncrypted');
+  },
+
+  getLinear(): { enabled: boolean; hasToken: boolean; teamFilter: string[] } {
+    return {
+      enabled: store.get('linearEnabled'),
+      hasToken: this.hasLinearToken(),
+      teamFilter: store.get('linearTeamFilter'),
+    };
+  },
+
+  setLinearEnabled(v: boolean): void {
+    store.set('linearEnabled', v);
+  },
+
+  setLinearTeamFilter(teams: string[]): void {
+    store.set('linearTeamFilter', teams);
   },
 };

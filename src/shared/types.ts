@@ -3,6 +3,7 @@ export type TaskStatus = 'todo' | 'in_progress' | 'blocked' | 'done' | 'snoozed'
 export type TaskSource =
   | 'manual'
   | 'github'
+  | 'linear'
   | 'slack'
   | 'tmux'
   | 'claude'
@@ -71,6 +72,18 @@ export interface SettingsSnapshot {
     repoInclude: string[];
     repoExclude: string[];
   };
+  linear: {
+    enabled: boolean;
+    hasToken: boolean;
+    teamFilter: string[];
+  };
+}
+
+export interface LinearStatus {
+  ok: boolean;
+  user?: string;
+  email?: string;
+  message?: string;
 }
 
 export interface TrailAPI {
@@ -100,6 +113,11 @@ export interface TrailAPI {
     setGithubEnabled: (enabled: boolean) => Promise<void>;
     setGithubRepoFilters: (include: string[], exclude: string[]) => Promise<void>;
     diagnoseGithub: () => Promise<GithubStatus>;
+    setLinearToken: (token: string) => Promise<void>;
+    clearLinearToken: () => Promise<void>;
+    setLinearEnabled: (enabled: boolean) => Promise<void>;
+    setLinearTeamFilter: (teams: string[]) => Promise<void>;
+    diagnoseLinear: () => Promise<LinearStatus>;
     diagnoseTerminal: () => Promise<TerminalDiagnostic>;
     getHookInfo: () => Promise<{ port: number; psScriptPath: string; shScriptPath: string }>;
   };

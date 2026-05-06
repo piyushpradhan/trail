@@ -256,6 +256,7 @@ input, textarea {
   border: 1px solid var(--border);
 }
 .source-chip.github { color: #c8c8d0; }
+.source-chip.linear { color: #5e6ad2; }
 .source-chip.slack { color: #ecb22e; }
 .source-chip.tmux { color: #4cb782; }
 .source-chip.claude { color: #d97757; }

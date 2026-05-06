@@ -1,0 +1,54 @@
+import { contextBridge, ipcRenderer } from 'electron';
+import type { TrailAPI } from '@shared/types';
+
+const api: TrailAPI = {
+  tasks: {
+    list: (filter) => ipcRenderer.invoke('tasks:list', filter),
+    create: (input) => ipcRenderer.invoke('tasks:create', input),
+    update: (id, patch) => ipcRenderer.invoke('tasks:update', id, patch),
+    setStatus: (id, status) => ipcRenderer.invoke('tasks:setStatus', id, status),
+    snooze: (id, until) => ipcRenderer.invoke('tasks:snooze', id, until),
+    remove: (id) => ipcRenderer.invoke('tasks:remove', id),
+    touch: (id) => ipcRenderer.invoke('tasks:touch', id),
+  },
+  collectors: {
+    runAll: () => ipcRenderer.invoke('collectors:runAll'),
+    runOne: (name) => ipcRenderer.invoke('collectors:runOne', name),
+  },
+  reconciler: {
+    run: () => ipcRenderer.invoke('reconciler:run'),
+  },
+  settings: {
+    get: () => ipcRenderer.invoke('settings:get'),
+    setApiKey: (key) => ipcRenderer.invoke('settings:setApiKey', key),
+    clearApiKey: () => ipcRenderer.invoke('settings:clearApiKey'),
+    setReconcilerEnabled: (enabled) => ipcRenderer.invoke('settings:setReconcilerEnabled', enabled),
+    setGithubToken: (token) => ipcRenderer.invoke('settings:setGithubToken', token),
+    clearGithubToken: () => ipcRenderer.invoke('settings:clearGithubToken'),
+    setGithubEnabled: (enabled) => ipcRenderer.invoke('settings:setGithubEnabled', enabled),
+    setGithubRepoFilters: (include, exclude) =>
+      ipcRenderer.invoke('settings:setGithubRepoFilters', include, exclude),
+    diagnoseGithub: () => ipcRenderer.invoke('settings:diagnoseGithub'),
+    diagnoseTerminal: () => ipcRenderer.invoke('settings:diagnoseTerminal'),
+    getHookInfo: () => ipcRenderer.invoke('settings:getHookInfo'),
+  },
+  app: {
+    quit: () => ipcRenderer.send('app:quit'),
+    openExternal: (url) => ipcRenderer.send('app:openExternal', url),
+  },
+};
+
+contextBridge.exposeInMainWorld('trail', api);
+
+contextBridge.exposeInMainWorld('trailEvents', {
+  onChange: (cb: () => void) => {
+    const handler = () => cb();
+    ipcRenderer.on('tasks:changed', handler);
+    return () => ipcRenderer.removeListener('tasks:changed', handler);
+  },
+  onSync: (cb: () => void) => {
+    const handler = () => cb();
+    ipcRenderer.on('trigger:sync', handler);
+    return () => ipcRenderer.removeListener('trigger:sync', handler);
+  },
+});

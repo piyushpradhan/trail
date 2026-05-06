@@ -1,6 +1,6 @@
 {
   "name": "trail",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Menubar task tracker. Collects signals from GitHub/Slack/tmux/AI sessions and keeps you honest.",
   "main": "out/main/index.js",
   "scripts": {
@@ -57,6 +57,9 @@
     },
     "win": {
       "target": "nsis"
+    },
+    "nsis": {
+      "artifactName": "Trail-Setup-${version}.${ext}"
     },
     "linux": {
       "category": "Utility",

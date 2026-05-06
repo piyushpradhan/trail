@@ -16,7 +16,7 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            artifact: 'dist/Trail Setup *.exe'
+            artifact: 'dist/Trail-Setup-*.exe'
             asset_name: trail-windows-x64-setup.exe
           - os: macos-latest
             artifact: 'dist/Trail-*.dmg'

@@ -4,6 +4,7 @@ import { TaskItem } from './components/TaskItem';
 import { CommandPalette } from './components/CommandPalette';
 import { Settings } from './components/Settings';
 import { Activity } from './components/Activity';
+import { TaskDetail } from './components/TaskDetail';
 import { Onboarding } from './components/Onboarding';
 import { UpdateBanner } from './components/UpdateBanner';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -41,6 +42,7 @@ export function App(): JSX.Element {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
 
   const searchQuery = useStore((s) => s.searchQuery);
   const setSearchQuery = useStore((s) => s.setSearchQuery);
@@ -213,7 +215,9 @@ export function App(): JSX.Element {
                 : `No ${filter} tasks.`}
           </div>
         ) : (
-          filtered.map((t) => <TaskItem key={t.id} task={t} />)
+          filtered.map((t) => (
+            <TaskItem key={t.id} task={t} onOpenDetail={() => setDetailTaskId(t.id)} />
+          ))
         )}
       </div>
 
@@ -239,6 +243,9 @@ export function App(): JSX.Element {
       />
       <ErrorBoundary>
         <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <TaskDetail taskId={detailTaskId} onClose={() => setDetailTaskId(null)} />
       </ErrorBoundary>
       <ErrorBoundary>
         <Onboarding

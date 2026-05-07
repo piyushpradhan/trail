@@ -312,6 +312,14 @@ export const eventsRepo = {
     ]);
   },
 
+  byTaskId(taskId: string, limit = 50): RawEvent[] {
+    const rows = allRows(
+      'SELECT * FROM events WHERE task_id = ? ORDER BY ts DESC LIMIT ?',
+      [taskId, limit],
+    );
+    return rows.map(rowToEvent);
+  },
+
   recent(limit: number, since?: number): RawEvent[] {
     const sql = since
       ? 'SELECT * FROM events WHERE ts >= ? ORDER BY ts DESC LIMIT ?'

@@ -20,6 +20,7 @@ const api: TrailAPI = {
   },
   events: {
     recent: (limit) => ipcRenderer.invoke('events:recent', limit),
+    forTask: (taskId, limit) => ipcRenderer.invoke('events:forTask', taskId, limit),
   },
   settings: {
     get: () => ipcRenderer.invoke('settings:get'),

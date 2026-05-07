@@ -147,6 +147,7 @@ export interface TrailAPI {
   };
   events: {
     recent: (limit?: number) => Promise<ActivityEvent[]>;
+    forTask: (taskId: string, limit?: number) => Promise<ActivityEvent[]>;
   };
   updater: {
     status: () => Promise<UpdateStatus>;

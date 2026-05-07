@@ -24,9 +24,10 @@ function relTime(ts: number): string {
 
 interface Props {
   task: Task;
+  onOpenDetail?: () => void;
 }
 
-export function TaskItem({ task }: Props): JSX.Element {
+export function TaskItem({ task, onOpenDetail }: Props): JSX.Element {
   const setStatus = useStore((s) => s.setStatus);
   const snooze = useStore((s) => s.snooze);
   const remove = useStore((s) => s.remove);
@@ -47,7 +48,14 @@ export function TaskItem({ task }: Props): JSX.Element {
         onClick={() => setStatus(task.id, STATUS_CYCLE[task.status])}
       />
 
-      <div className="task-body" onDoubleClick={() => open(task.id)}>
+      <div
+        className="task-body"
+        onClick={() => onOpenDetail?.()}
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          open(task.id);
+        }}
+      >
         <div className="task-title">{task.title}</div>
         <div className="task-meta">
           <span className={`source-chip ${task.source}`}>{task.source}</span>

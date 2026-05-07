@@ -257,6 +257,29 @@ describe('eventsRepo', () => {
     expect((out[0]!.payload as { v: string }).v).toBe('new');
   });
 
+  it('byTaskId returns events for a task in desc ts order', async () => {
+    const t = tasksRepo.create({ title: 'x' });
+    eventsRepo.log('a', { v: 1 }, t.id);
+    await new Promise((r) => setTimeout(r, 2));
+    eventsRepo.log('b', { v: 2 }, t.id);
+    await new Promise((r) => setTimeout(r, 2));
+    eventsRepo.log('unrelated', { v: 3 }); // no taskId
+    const out = eventsRepo.byTaskId(t.id);
+    expect(out).toHaveLength(2);
+    expect((out[0]!.payload as { v: number }).v).toBe(2);
+    expect((out[1]!.payload as { v: number }).v).toBe(1);
+  });
+
+  it('byTaskId honors limit', () => {
+    const t = tasksRepo.create({ title: 'x' });
+    for (let i = 0; i < 10; i++) eventsRepo.log('e', { i }, t.id);
+    expect(eventsRepo.byTaskId(t.id, 4)).toHaveLength(4);
+  });
+
+  it('byTaskId returns empty for unknown task', () => {
+    expect(eventsRepo.byTaskId('nope')).toEqual([]);
+  });
+
   it('parses payload back as JSON', () => {
     eventsRepo.log('t', { nested: { arr: [1, 2, 3] } });
     const e = eventsRepo.unprocessed(['t'], 1)[0]!;

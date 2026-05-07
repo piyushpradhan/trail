@@ -1,6 +1,6 @@
 {
   "name": "trail",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Menubar task tracker. Collects signals from GitHub/Slack/tmux/AI sessions and keeps you honest.",
   "main": "out/main/index.js",
   "scripts": {

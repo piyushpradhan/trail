@@ -92,6 +92,40 @@ describe('settings — Linear', () => {
   });
 });
 
+describe('settings — Slack', () => {
+  beforeEach(() => {
+    settings.clearSlackToken();
+  });
+
+  it('defaults', () => {
+    const cfg = settings.getSlack();
+    expect(cfg.enabled).toBe(true);
+    expect(cfg.hasToken).toBe(false);
+    expect(cfg.includeMentions).toBe(true);
+    expect(cfg.includeDms).toBe(true);
+    expect(cfg.channelExclude).toEqual([]);
+  });
+
+  it('persists token + options', () => {
+    settings.setSlackToken('xoxp-test');
+    settings.setSlackOptions({ includeMentions: false, channelExclude: ['alerts'] });
+    settings.setSlackEnabled(false);
+    const cfg = settings.getSlack();
+    expect(cfg.hasToken).toBe(true);
+    expect(cfg.enabled).toBe(false);
+    expect(cfg.includeMentions).toBe(false);
+    expect(cfg.includeDms).toBe(true); // not changed
+    expect(cfg.channelExclude).toEqual(['alerts']);
+    expect(settings.getSlackToken()).toBe('xoxp-test');
+  });
+
+  it('empty token clears', () => {
+    settings.setSlackToken('x');
+    settings.setSlackToken('');
+    expect(settings.hasSlackToken()).toBe(false);
+  });
+});
+
 describe('settings — onboarding', () => {
   it('defaults to incomplete', () => {
     settings.setOnboardingComplete(false);

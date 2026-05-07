@@ -79,6 +79,14 @@ export interface HookInstallResult {
   message?: string;
 }
 
+export interface SlackStatus {
+  ok: boolean;
+  user?: string;
+  team?: string;
+  userId?: string;
+  message?: string;
+}
+
 export interface TerminalDiagnostic {
   platform: string;
   discovered: Array<{ name: string; path: string; sizeBytes: number; mtime: number }>;
@@ -102,6 +110,13 @@ export interface SettingsSnapshot {
     enabled: boolean;
     hasToken: boolean;
     teamFilter: string[];
+  };
+  slack: {
+    enabled: boolean;
+    hasToken: boolean;
+    includeMentions: boolean;
+    includeDms: boolean;
+    channelExclude: string[];
   };
   onboardingComplete: boolean;
 }
@@ -159,6 +174,11 @@ export interface TrailAPI {
     setLinearEnabled: (enabled: boolean) => Promise<void>;
     setLinearTeamFilter: (teams: string[]) => Promise<void>;
     diagnoseLinear: () => Promise<LinearStatus>;
+    setSlackToken: (token: string) => Promise<void>;
+    clearSlackToken: () => Promise<void>;
+    setSlackEnabled: (enabled: boolean) => Promise<void>;
+    setSlackOptions: (opts: { includeMentions?: boolean; includeDms?: boolean; channelExclude?: string[] }) => Promise<void>;
+    diagnoseSlack: () => Promise<SlackStatus>;
     diagnoseTerminal: () => Promise<TerminalDiagnostic>;
     getHookInfo: () => Promise<{ port: number; psScriptPath: string; shScriptPath: string }>;
     installShellHook: (shell: 'powershell' | 'bash' | 'zsh') => Promise<HookInstallResult>;

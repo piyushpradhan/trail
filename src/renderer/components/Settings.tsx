@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import type { GithubStatus, LinearStatus, SettingsSnapshot, TerminalDiagnostic } from '@shared/types';
+import type { GithubStatus, LinearStatus, SettingsSnapshot, SlackStatus, TerminalDiagnostic } from '@shared/types';
 
 interface Props {
   open: boolean;
@@ -41,12 +41,19 @@ export function Settings({ open, onClose }: Props): JSX.Element | null {
   const [linearTesting, setLinearTesting] = useState(false);
   const [linearTeamDraft, setLinearTeamDraft] = useState('');
 
+  // Slack-specific
+  const [slackToken, setSlackToken] = useState('');
+  const [slackStatus, setSlackStatus] = useState<SlackStatus | null>(null);
+  const [slackTesting, setSlackTesting] = useState(false);
+  const [slackExcludeDraft, setSlackExcludeDraft] = useState('');
+
   const refresh = async () => {
     const s = await window.trail.settings.get();
     setSnapshot(s);
     setGhIncludeDraft(s.github.repoInclude.join(', '));
     setGhExcludeDraft(s.github.repoExclude.join(', '));
     setLinearTeamDraft(s.linear.teamFilter.join(', '));
+    setSlackExcludeDraft(s.slack.channelExclude.join(', '));
   };
 
   useEffect(() => {
@@ -70,6 +77,9 @@ export function Settings({ open, onClose }: Props): JSX.Element | null {
       .catch(() => undefined);
     void Promise.resolve(window.trail.settings.diagnoseLinear?.())
       .then((s) => s && setLinearStatus(s))
+      .catch(() => undefined);
+    void Promise.resolve(window.trail.settings.diagnoseSlack?.())
+      .then((s) => s && setSlackStatus(s))
       .catch(() => undefined);
   }, [open]);
 
@@ -176,6 +186,56 @@ export function Settings({ open, onClose }: Props): JSX.Element | null {
       setTermDiag(await window.trail.settings.diagnoseTerminal());
     } catch (err) {
       setStatus(`Terminal sync failed: ${(err as Error).message}`);
+    }
+  };
+
+  // ---- Slack ----
+  const saveSlackToken = async () => {
+    if (!slackToken.trim()) return;
+    await window.trail.settings.setSlackToken(slackToken.trim());
+    setSlackToken('');
+    await refresh();
+    setSlackStatus(await window.trail.settings.diagnoseSlack());
+  };
+
+  const clearSlackTokenFn = async () => {
+    await window.trail.settings.clearSlackToken();
+    await refresh();
+    setSlackStatus(await window.trail.settings.diagnoseSlack());
+  };
+
+  const toggleSlack = async (enabled: boolean) => {
+    await window.trail.settings.setSlackEnabled(enabled);
+    await refresh();
+  };
+
+  const setSlackOpt = async (opts: Parameters<typeof window.trail.settings.setSlackOptions>[0]) => {
+    await window.trail.settings.setSlackOptions(opts);
+    await refresh();
+  };
+
+  const testSlack = async () => {
+    setSlackTesting(true);
+    try {
+      setSlackStatus(await window.trail.settings.diagnoseSlack());
+    } finally {
+      setSlackTesting(false);
+    }
+  };
+
+  const saveSlackExcludes = async () => {
+    const list = slackExcludeDraft.split(',').map((s) => s.trim()).filter(Boolean);
+    await window.trail.settings.setSlackOptions({ channelExclude: list });
+    await refresh();
+    setStatus('Slack channel excludes saved.');
+  };
+
+  const syncSlackNow = async () => {
+    try {
+      const r = await window.trail.collectors.runOne('slack');
+      setStatus(`Slack synced — ${r.created} new`);
+    } catch (err) {
+      setStatus(`Slack sync failed: ${(err as Error).message}`);
     }
   };
 
@@ -532,6 +592,97 @@ export function Settings({ open, onClose }: Props): JSX.Element | null {
                 Save filter
               </button>
               <button className="btn-primary" onClick={() => void syncLinearNow()}>
+                Sync now
+              </button>
+            </div>
+          </div>
+
+          {/* Slack */}
+          <div className="settings-section">
+            <div className="settings-label">
+              <span className={`status-dot ${slackStatus ? (slackStatus.ok ? 'ok' : 'error') : 'unknown'}`} />
+              Slack
+            </div>
+            <div className="settings-sub">
+              {slackStatus
+                ? slackStatus.ok
+                  ? `Connected as ${slackStatus.user ?? '?'}${slackStatus.team ? ` · ${slackStatus.team}` : ''}`
+                  : `Not connected: ${slackStatus.message ?? 'unknown'}`
+                : 'Loading…'}
+            </div>
+
+            <label className="settings-row">
+              <input
+                type="checkbox"
+                checked={snapshot?.slack.enabled ?? false}
+                onChange={(e) => void toggleSlack(e.target.checked)}
+              />
+              <span>Enabled</span>
+            </label>
+
+            {snapshot?.slack.hasToken ? (
+              <div className="settings-row">
+                <span className="settings-state ok">Token saved</span>
+                <button className="btn-ghost" onClick={() => void clearSlackTokenFn()}>Remove</button>
+              </div>
+            ) : (
+              <div className="settings-row">
+                <input
+                  className="settings-input"
+                  type="password"
+                  placeholder="xoxp-…"
+                  value={slackToken}
+                  onChange={(e) => setSlackToken(e.target.value)}
+                />
+                <button
+                  className="btn-primary"
+                  onClick={() => void saveSlackToken()}
+                  disabled={!slackToken.trim()}
+                >
+                  Save
+                </button>
+              </div>
+            )}
+
+            <div className="settings-sub">
+              Create a Slack app, install to your workspace, copy the user OAuth token (xoxp-…).
+              Required scopes: <code>im:history, mpim:history, channels:history, groups:history,
+              users:read, channels:read, groups:read, im:read, mpim:read</code>.
+            </div>
+
+            <label className="settings-row">
+              <input
+                type="checkbox"
+                checked={snapshot?.slack.includeDms ?? false}
+                onChange={(e) => void setSlackOpt({ includeDms: e.target.checked })}
+              />
+              <span>Track DMs (any message from another user)</span>
+            </label>
+            <label className="settings-row">
+              <input
+                type="checkbox"
+                checked={snapshot?.slack.includeMentions ?? false}
+                onChange={(e) => void setSlackOpt({ includeMentions: e.target.checked })}
+              />
+              <span>Track @-mentions in channels</span>
+            </label>
+
+            <div className="settings-sub">Channel excludes (substring match, comma-separated)</div>
+            <input
+              className="settings-input"
+              placeholder="bots, deploys, alerts"
+              value={slackExcludeDraft}
+              onChange={(e) => setSlackExcludeDraft(e.target.value)}
+            />
+
+            <div className="settings-row">
+              <button className="btn-ghost" onClick={() => void testSlack()} disabled={slackTesting}>
+                {slackTesting ? 'Testing…' : 'Test connection'}
+              </button>
+              <button className="btn-ghost" onClick={() => void saveSlackExcludes()}>
+                Save excludes
+              </button>
+              <button className="btn-primary" onClick={() => void syncSlackNow()}>
                 Sync now
               </button>
             </div>

@@ -13,6 +13,11 @@ interface Schema {
   linearTokenEncrypted?: string;
   linearTeamFilter: string[]; // team key match (substring), empty = all teams
   linearEnabled: boolean;
+  slackTokenEncrypted?: string;
+  slackEnabled: boolean;
+  slackIncludeMentions: boolean;
+  slackIncludeDms: boolean;
+  slackChannelExclude: string[]; // channel name substring filter
   onboardingComplete: boolean;
 }
 
@@ -26,6 +31,10 @@ const store = new Store<Schema>({
     githubEnabled: true,
     linearTeamFilter: [],
     linearEnabled: true,
+    slackEnabled: true,
+    slackIncludeMentions: true,
+    slackIncludeDms: true,
+    slackChannelExclude: [],
     onboardingComplete: false,
   },
 });
@@ -175,6 +184,64 @@ export const settings = {
 
   setLinearTeamFilter(teams: string[]): void {
     store.set('linearTeamFilter', teams);
+  },
+
+  // Slack
+  hasSlackToken(): boolean {
+    return !!store.get('slackTokenEncrypted');
+  },
+
+  getSlackToken(): string | null {
+    const enc = store.get('slackTokenEncrypted');
+    if (!enc) return null;
+    if (!safeStorage.isEncryptionAvailable()) return null;
+    try {
+      return safeStorage.decryptString(Buffer.from(enc, 'base64'));
+    } catch {
+      return null;
+    }
+  },
+
+  setSlackToken(token: string): void {
+    if (!token) {
+      store.delete('slackTokenEncrypted');
+      return;
+    }
+    if (!safeStorage.isEncryptionAvailable()) {
+      throw new Error('Secure storage unavailable on this system');
+    }
+    const enc = safeStorage.encryptString(token).toString('base64');
+    store.set('slackTokenEncrypted', enc);
+  },
+
+  clearSlackToken(): void {
+    store.delete('slackTokenEncrypted');
+  },
+
+  getSlack(): {
+    enabled: boolean;
+    hasToken: boolean;
+    includeMentions: boolean;
+    includeDms: boolean;
+    channelExclude: string[];
+  } {
+    return {
+      enabled: store.get('slackEnabled'),
+      hasToken: this.hasSlackToken(),
+      includeMentions: store.get('slackIncludeMentions'),
+      includeDms: store.get('slackIncludeDms'),
+      channelExclude: store.get('slackChannelExclude'),
+    };
+  },
+
+  setSlackEnabled(v: boolean): void {
+    store.set('slackEnabled', v);
+  },
+
+  setSlackOptions(opts: { includeMentions?: boolean; includeDms?: boolean; channelExclude?: string[] }): void {
+    if (opts.includeMentions !== undefined) store.set('slackIncludeMentions', opts.includeMentions);
+    if (opts.includeDms !== undefined) store.set('slackIncludeDms', opts.includeDms);
+    if (opts.channelExclude !== undefined) store.set('slackChannelExclude', opts.channelExclude);
   },
 
   // Onboarding

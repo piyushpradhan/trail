@@ -4,6 +4,7 @@ import { collectors, runAllCollectors, type CollectorName } from './collectors/i
 import { runReconciler } from './reconciler.js';
 import { diagnoseGithub } from './collectors/github.js';
 import { diagnoseLinear } from './collectors/linear.js';
+import { diagnoseSlack } from './collectors/slack.js';
 import { diagnoseTerminal } from './collectors/terminal.js';
 import { HOOK_PORT } from './hookServer.js';
 import { installShellHook, uninstallShellHook, suggestedShell, type InstallShell } from './installHook.js';
@@ -89,6 +90,7 @@ export function registerIpc(onChange: () => void): void {
     reconciler: settings.getReconciler(),
     github: settings.getGithub(),
     linear: settings.getLinear(),
+    slack: settings.getSlack(),
     onboardingComplete: settings.isOnboardingComplete(),
   }));
 
@@ -117,6 +119,14 @@ export function registerIpc(onChange: () => void): void {
     settings.setLinearTeamFilter(teams),
   ));
   ipcMain.handle('settings:diagnoseLinear', () => diagnoseLinear());
+
+  ipcMain.handle('settings:setSlackToken', wrap((token: string) => settings.setSlackToken(token)));
+  ipcMain.handle('settings:clearSlackToken', wrap(() => settings.clearSlackToken()));
+  ipcMain.handle('settings:setSlackEnabled', wrap((enabled: boolean) => settings.setSlackEnabled(enabled)));
+  ipcMain.handle('settings:setSlackOptions', wrap((opts: Parameters<typeof settings.setSlackOptions>[0]) =>
+    settings.setSlackOptions(opts),
+  ));
+  ipcMain.handle('settings:diagnoseSlack', () => diagnoseSlack());
   ipcMain.handle('settings:diagnoseTerminal', () => diagnoseTerminal());
 
   ipcMain.handle('settings:installShellHook', wrap((shell: InstallShell) => installShellHook(shell)));

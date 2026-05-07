@@ -234,6 +234,29 @@ describe('eventsRepo', () => {
     expect(() => eventsRepo.markProcessed([])).not.toThrow();
   });
 
+  it('recent returns events ordered by ts desc with limit', async () => {
+    for (let i = 0; i < 5; i++) {
+      eventsRepo.log('e.recent', { i });
+      await new Promise((r) => setTimeout(r, 2));
+    }
+    const out = eventsRepo.recent(3);
+    expect(out).toHaveLength(3);
+    // newest first
+    expect((out[0]!.payload as { i: number }).i).toBe(4);
+    expect((out[2]!.payload as { i: number }).i).toBe(2);
+  });
+
+  it('recent with since filter excludes older events', async () => {
+    eventsRepo.log('e', { v: 'old' });
+    await new Promise((r) => setTimeout(r, 5));
+    const cutoff = Date.now();
+    await new Promise((r) => setTimeout(r, 5));
+    eventsRepo.log('e', { v: 'new' });
+    const out = eventsRepo.recent(10, cutoff);
+    expect(out).toHaveLength(1);
+    expect((out[0]!.payload as { v: string }).v).toBe('new');
+  });
+
   it('parses payload back as JSON', () => {
     eventsRepo.log('t', { nested: { arr: [1, 2, 3] } });
     const e = eventsRepo.unprocessed(['t'], 1)[0]!;

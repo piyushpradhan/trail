@@ -66,6 +66,16 @@ export function registerIpc(onChange: () => void): void {
     return r;
   });
 
+  ipcMain.handle('events:recent', wrap((limit?: number) =>
+    eventsRepo.recent(Math.min(Math.max(limit ?? 100, 1), 500)).map((e) => ({
+      id: e.id,
+      taskId: e.taskId,
+      type: e.type,
+      payload: e.payload,
+      ts: e.ts,
+    })),
+  ));
+
   ipcMain.handle('reconciler:run', async () => {
     const r = await runReconciler();
     onChange();

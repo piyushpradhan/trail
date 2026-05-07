@@ -18,6 +18,9 @@ const api: TrailAPI = {
   reconciler: {
     run: () => ipcRenderer.invoke('reconciler:run'),
   },
+  events: {
+    recent: (limit) => ipcRenderer.invoke('events:recent', limit),
+  },
   settings: {
     get: () => ipcRenderer.invoke('settings:get'),
     setApiKey: (key) => ipcRenderer.invoke('settings:setApiKey', key),

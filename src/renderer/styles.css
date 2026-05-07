@@ -535,6 +535,66 @@ input, textarea {
 .status-dot.error { background: var(--red); }
 .status-dot.unknown { background: var(--text-faint); }
 
+/* Activity feed */
+.activity-list {
+  display: flex;
+  flex-direction: column;
+}
+.activity-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  position: relative;
+}
+.activity-row:last-child { border-bottom: none; }
+.activity-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: transparent;
+}
+.activity-row.tone-ok::before { background: var(--green); }
+.activity-row.tone-warn::before { background: var(--amber); }
+.activity-row.tone-error::before { background: var(--red); }
+.activity-source {
+  margin-top: 1px;
+  flex-shrink: 0;
+  width: 64px;
+  text-align: center;
+}
+.activity-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.activity-message {
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.activity-detail {
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.activity-time {
+  color: var(--text-faint);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
 .error-fallback {
   padding: 16px;
   display: flex;

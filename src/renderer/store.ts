@@ -5,7 +5,7 @@ interface State {
   tasks: Task[];
   loading: boolean;
   syncing: boolean;
-  filter: 'today' | 'all' | 'stalled' | 'done';
+  filter: 'today' | 'all' | 'stalled' | 'done' | 'activity';
   setFilter: (f: State['filter']) => void;
   refresh: () => Promise<void>;
   sync: () => Promise<void>;
@@ -86,7 +86,9 @@ export function selectFiltered(s: State): Task[] {
     case 'done':
       return s.tasks.filter((t) => t.status === 'done');
     case 'all':
-    default:
       return s.tasks;
+    case 'activity':
+    default:
+      return [];
   }
 }

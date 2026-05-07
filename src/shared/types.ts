@@ -37,6 +37,14 @@ export interface TaskInput {
   dueAt?: number | null;
 }
 
+export interface ActivityEvent {
+  id: string;
+  taskId: string | null;
+  type: string;
+  payload: unknown;
+  ts: number;
+}
+
 export interface ReconcileResult {
   attempted: number;
   created: number;
@@ -102,6 +110,9 @@ export interface TrailAPI {
   };
   reconciler: {
     run: () => Promise<ReconcileResult>;
+  };
+  events: {
+    recent: (limit?: number) => Promise<ActivityEvent[]>;
   };
   settings: {
     get: () => Promise<SettingsSnapshot>;

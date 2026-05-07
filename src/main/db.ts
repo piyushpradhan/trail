@@ -312,6 +312,14 @@ export const eventsRepo = {
     ]);
   },
 
+  recent(limit: number, since?: number): RawEvent[] {
+    const sql = since
+      ? 'SELECT * FROM events WHERE ts >= ? ORDER BY ts DESC LIMIT ?'
+      : 'SELECT * FROM events ORDER BY ts DESC LIMIT ?';
+    const params = since ? [since, limit] : [limit];
+    return allRows(sql, params).map(rowToEvent);
+  },
+
   unprocessed(types: string[], limit: number): RawEvent[] {
     if (types.length === 0) return [];
     const placeholders = types.map(() => '?').join(',');

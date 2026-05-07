@@ -3,6 +3,7 @@ import { useStore, selectFiltered } from './store';
 import { TaskItem } from './components/TaskItem';
 import { CommandPalette } from './components/CommandPalette';
 import { Settings } from './components/Settings';
+import { Activity } from './components/Activity';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { RefreshIcon, PlusIcon, SettingsIcon } from './icons';
 
@@ -15,11 +16,14 @@ declare global {
   }
 }
 
-const TABS: { id: 'today' | 'all' | 'stalled' | 'done'; label: string }[] = [
+type TabId = 'today' | 'all' | 'stalled' | 'done' | 'activity';
+
+const TABS: { id: TabId; label: string }[] = [
   { id: 'today', label: 'Today' },
   { id: 'stalled', label: 'Stalled' },
   { id: 'all', label: 'All' },
   { id: 'done', label: 'Done' },
+  { id: 'activity', label: 'Activity' },
 ];
 
 export function App(): JSX.Element {
@@ -76,6 +80,7 @@ export function App(): JSX.Element {
       ).length,
       all: tasks.length,
       done: tasks.filter((t) => t.status === 'done').length,
+      activity: undefined as number | undefined,
     };
   }, [tasks]);
 
@@ -115,7 +120,7 @@ export function App(): JSX.Element {
             onClick={() => setFilter(t.id)}
           >
             {t.label}
-            <span className="count">{counts[t.id]}</span>
+            {counts[t.id] !== undefined && <span className="count">{counts[t.id]}</span>}
           </button>
         ))}
       </nav>
@@ -132,7 +137,9 @@ export function App(): JSX.Element {
       </form>
 
       <div className="list">
-        {filtered.length === 0 ? (
+        {filter === 'activity' ? (
+          <Activity active={true} />
+        ) : filtered.length === 0 ? (
           <div className="empty">
             {filter === 'today'
               ? 'Nothing on your plate. Sync or add a task.'

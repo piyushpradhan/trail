@@ -92,6 +92,20 @@ describe('settings — Linear', () => {
   });
 });
 
+describe('settings — onboarding', () => {
+  it('defaults to incomplete', () => {
+    settings.setOnboardingComplete(false);
+    expect(settings.isOnboardingComplete()).toBe(false);
+  });
+
+  it('persists complete flag', () => {
+    settings.setOnboardingComplete(true);
+    expect(settings.isOnboardingComplete()).toBe(true);
+    settings.setOnboardingComplete(false);
+    expect(settings.isOnboardingComplete()).toBe(false);
+  });
+});
+
 describe('settings — reconciler', () => {
   it('defaults are sensible', () => {
     const r = settings.getReconciler();

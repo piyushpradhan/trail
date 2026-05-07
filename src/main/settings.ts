@@ -13,6 +13,7 @@ interface Schema {
   linearTokenEncrypted?: string;
   linearTeamFilter: string[]; // team key match (substring), empty = all teams
   linearEnabled: boolean;
+  onboardingComplete: boolean;
 }
 
 const store = new Store<Schema>({
@@ -25,6 +26,7 @@ const store = new Store<Schema>({
     githubEnabled: true,
     linearTeamFilter: [],
     linearEnabled: true,
+    onboardingComplete: false,
   },
 });
 
@@ -173,5 +175,14 @@ export const settings = {
 
   setLinearTeamFilter(teams: string[]): void {
     store.set('linearTeamFilter', teams);
+  },
+
+  // Onboarding
+  isOnboardingComplete(): boolean {
+    return !!store.get('onboardingComplete');
+  },
+
+  setOnboardingComplete(v: boolean): void {
+    store.set('onboardingComplete', v);
   },
 };

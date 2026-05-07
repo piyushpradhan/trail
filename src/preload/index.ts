@@ -43,6 +43,7 @@ const api: TrailAPI = {
     uninstallShellHook: (shell, profilePath) =>
       ipcRenderer.invoke('settings:uninstallShellHook', shell, profilePath),
     suggestedShell: () => ipcRenderer.invoke('settings:suggestedShell'),
+    setOnboardingComplete: (v) => ipcRenderer.invoke('settings:setOnboardingComplete', v),
   },
   app: {
     quit: () => ipcRenderer.send('app:quit'),

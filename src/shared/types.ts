@@ -94,6 +94,7 @@ export interface SettingsSnapshot {
     hasToken: boolean;
     teamFilter: string[];
   };
+  onboardingComplete: boolean;
 }
 
 export interface LinearStatus {
@@ -146,6 +147,7 @@ export interface TrailAPI {
       profilePath: string,
     ) => Promise<HookInstallResult>;
     suggestedShell: () => Promise<'powershell' | 'bash' | 'zsh'>;
+    setOnboardingComplete: (v: boolean) => Promise<void>;
   };
   app: {
     quit: () => void;

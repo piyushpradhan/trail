@@ -4,6 +4,7 @@ import { TaskItem } from './components/TaskItem';
 import { CommandPalette } from './components/CommandPalette';
 import { Settings } from './components/Settings';
 import { Activity } from './components/Activity';
+import { Onboarding } from './components/Onboarding';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { RefreshIcon, PlusIcon, SettingsIcon } from './icons';
 
@@ -38,11 +39,15 @@ export function App(): JSX.Element {
   const [draft, setDraft] = useState('');
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
 
   const filtered = useMemo(() => selectFiltered({ tasks, filter } as any), [tasks, filter]);
 
   useEffect(() => {
     void refresh();
+    void window.trail.settings.get().then((s) => {
+      if (!s.onboardingComplete) setOnboardingOpen(true);
+    });
     const offChange = window.trailEvents.onChange(() => void refresh());
     const offSync = window.trailEvents.onSync(() => void sync());
     return () => {
@@ -170,6 +175,16 @@ export function App(): JSX.Element {
       />
       <ErrorBoundary>
         <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <Onboarding
+          open={onboardingOpen}
+          onClose={() => setOnboardingOpen(false)}
+          onSettingsClick={() => {
+            setOnboardingOpen(false);
+            setSettingsOpen(true);
+          }}
+        />
       </ErrorBoundary>
     </div>
   );

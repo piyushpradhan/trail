@@ -49,6 +49,12 @@ export const TrashIcon = () => (
   </svg>
 );
 
+export const CheckIcon = () => (
+  <svg {...props}>
+    <path d="M3 8l3 3 7-7" />
+  </svg>
+);
+
 export const SettingsIcon = () => (
   <svg {...props}>
     <circle cx="8" cy="8" r="2" />

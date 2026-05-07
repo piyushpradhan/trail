@@ -47,6 +47,12 @@ export function CommandPalette({ open, onClose, onOpenSettings }: Props): JSX.El
         run: () => window.trail.reconciler.run().then(() => undefined),
       },
       { id: 'settings', label: 'Open Settings', group: 'Action', run: () => onOpenSettings() },
+      {
+        id: 'onboarding',
+        label: 'Show onboarding wizard',
+        group: 'Action',
+        run: () => window.trail.settings.setOnboardingComplete(false).then(() => location.reload()),
+      },
       ...collectorNames.map((n) => ({
         id: `sync-${n}`,
         label: `Sync ${n}`,

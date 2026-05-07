@@ -88,6 +88,7 @@ export function registerIpc(onChange: () => void): void {
     reconciler: settings.getReconciler(),
     github: settings.getGithub(),
     linear: settings.getLinear(),
+    onboardingComplete: settings.isOnboardingComplete(),
   }));
 
   ipcMain.handle('settings:setApiKey', wrap((key: string) => settings.setApiKey(key)));
@@ -122,6 +123,9 @@ export function registerIpc(onChange: () => void): void {
     uninstallShellHook(shell, profilePath),
   ));
   ipcMain.handle('settings:suggestedShell', () => suggestedShell());
+  ipcMain.handle('settings:setOnboardingComplete', wrap((v: boolean) =>
+    settings.setOnboardingComplete(v),
+  ));
 
   ipcMain.handle('settings:getHookInfo', () => {
     const base = app.isPackaged

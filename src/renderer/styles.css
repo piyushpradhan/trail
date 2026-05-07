@@ -536,6 +536,115 @@ input, textarea {
 .status-dot.error { background: var(--red); }
 .status-dot.unknown { background: var(--text-faint); }
 
+/* Onboarding */
+.onboarding {
+  width: 92%;
+  max-width: 360px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+}
+.onboarding-progress {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.onboarding-step-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--text-faint);
+  transition: color 0.1s, background 0.1s;
+  flex: 1;
+  justify-content: center;
+}
+.onboarding-step-pill:hover { color: var(--text-muted); }
+.onboarding-step-pill.active {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+.onboarding-step-pill.done {
+  color: var(--green);
+}
+.onboarding-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  font-size: 10px;
+  font-weight: 500;
+}
+.onboarding-step-pill.done .onboarding-step-num {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--bg);
+}
+.onboarding-step-pill.active .onboarding-step-num {
+  border-color: var(--accent);
+  color: var(--text);
+}
+.onboarding-step-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.onboarding-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+}
+.onboarding-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+.onboarding-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.onboarding-desc a {
+  color: var(--accent-hover);
+  text-decoration: none;
+}
+.onboarding-desc a:hover { text-decoration: underline; }
+.onboarding-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+}
+.onboarding-footer {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-faint);
+  background: var(--bg);
+}
+.settings-sub.ok { color: var(--green); }
+
 /* Activity feed */
 .activity-list {
   display: flex;

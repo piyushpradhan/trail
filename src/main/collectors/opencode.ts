@@ -8,7 +8,7 @@ const ROOTS = [
   join(homedir(), '.local', 'share', 'opencode', 'storage'),
   join(homedir(), 'AppData', 'Local', 'opencode', 'storage'),
 ];
-const MAX_AGE_HOURS = 48;
+const DEFAULT_MAX_AGE_HOURS = 48;
 
 interface MessageJson {
   id?: string;
@@ -49,7 +49,7 @@ function collectPartsText(partsDir: string, messageId: string): string {
   return chunks.join('\n').trim();
 }
 
-export async function runOpencodeCollector(): Promise<{ created: number }> {
+export async function runOpencodeCollector(opts?: { maxAgeHours?: number }): Promise<{ created: number }> {
   const root = findRoot();
   if (!root) return { created: 0 };
 
@@ -57,7 +57,7 @@ export async function runOpencodeCollector(): Promise<{ created: number }> {
   const partRoot = join(root, 'part');
   if (!existsSync(messageRoot)) return { created: 0 };
 
-  const cutoff = Date.now() - MAX_AGE_HOURS * 3600_000;
+  const cutoff = Date.now() - (opts?.maxAgeHours ?? DEFAULT_MAX_AGE_HOURS) * 3600_000;
   let created = 0;
 
   let sessions: string[];

@@ -10,7 +10,7 @@ const CANDIDATE_DIRS = [
   join(homedir(), '.codex', 'sessions'),
   join(homedir(), '.codex'),
 ];
-const MAX_AGE_HOURS = 48;
+const DEFAULT_MAX_AGE_HOURS = 48;
 
 function findRoot(): string | null {
   for (const d of CANDIDATE_DIRS) if (existsSync(d)) return d;
@@ -119,11 +119,11 @@ function walk(dir: string, out: string[], depth = 0): void {
   }
 }
 
-export async function runCodexCollector(): Promise<{ created: number }> {
+export async function runCodexCollector(opts?: { maxAgeHours?: number }): Promise<{ created: number }> {
   const root = findRoot();
   if (!root) return { created: 0 };
 
-  const cutoff = Date.now() - MAX_AGE_HOURS * 3600_000;
+  const cutoff = Date.now() - (opts?.maxAgeHours ?? DEFAULT_MAX_AGE_HOURS) * 3600_000;
   const files: string[] = [];
   walk(root, files);
 

@@ -7,7 +7,7 @@ import { getCursor, setCursor } from './state.js';
 import { scorePrompt, projectFromSlug } from './heuristics.js';
 
 const CLAUDE_DIR = join(homedir(), '.claude', 'projects');
-const MAX_AGE_HOURS = 48;
+const DEFAULT_MAX_AGE_HOURS = 48;
 
 interface UserLine {
   type: string;
@@ -91,9 +91,9 @@ async function processFile(slug: string, file: string): Promise<number> {
   return created;
 }
 
-export async function runClaudeCollector(): Promise<{ created: number }> {
+export async function runClaudeCollector(opts?: { maxAgeHours?: number }): Promise<{ created: number }> {
   if (!existsSync(CLAUDE_DIR)) return { created: 0 };
-  const cutoff = Date.now() - MAX_AGE_HOURS * 3600_000;
+  const cutoff = Date.now() - (opts?.maxAgeHours ?? DEFAULT_MAX_AGE_HOURS) * 3600_000;
   let created = 0;
 
   const slugs = readdirSync(CLAUDE_DIR);

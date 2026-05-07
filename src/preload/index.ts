@@ -39,6 +39,10 @@ const api: TrailAPI = {
     diagnoseLinear: () => ipcRenderer.invoke('settings:diagnoseLinear'),
     diagnoseTerminal: () => ipcRenderer.invoke('settings:diagnoseTerminal'),
     getHookInfo: () => ipcRenderer.invoke('settings:getHookInfo'),
+    installShellHook: (shell) => ipcRenderer.invoke('settings:installShellHook', shell),
+    uninstallShellHook: (shell, profilePath) =>
+      ipcRenderer.invoke('settings:uninstallShellHook', shell, profilePath),
+    suggestedShell: () => ipcRenderer.invoke('settings:suggestedShell'),
   },
   app: {
     quit: () => ipcRenderer.send('app:quit'),

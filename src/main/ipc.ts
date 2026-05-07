@@ -6,6 +6,7 @@ import { diagnoseGithub } from './collectors/github.js';
 import { diagnoseLinear } from './collectors/linear.js';
 import { diagnoseTerminal } from './collectors/terminal.js';
 import { HOOK_PORT } from './hookServer.js';
+import { installShellHook, uninstallShellHook, suggestedShell, type InstallShell } from './installHook.js';
 import { join } from 'node:path';
 import { settings } from './settings.js';
 import type { Task, TaskInput, TaskStatus } from '@shared/types';
@@ -115,6 +116,12 @@ export function registerIpc(onChange: () => void): void {
   ));
   ipcMain.handle('settings:diagnoseLinear', () => diagnoseLinear());
   ipcMain.handle('settings:diagnoseTerminal', () => diagnoseTerminal());
+
+  ipcMain.handle('settings:installShellHook', wrap((shell: InstallShell) => installShellHook(shell)));
+  ipcMain.handle('settings:uninstallShellHook', wrap((shell: InstallShell, profilePath: string) =>
+    uninstallShellHook(shell, profilePath),
+  ));
+  ipcMain.handle('settings:suggestedShell', () => suggestedShell());
 
   ipcMain.handle('settings:getHookInfo', () => {
     const base = app.isPackaged

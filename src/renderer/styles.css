@@ -474,6 +474,7 @@ input, textarea {
   font-family: var(--mono);
 }
 .settings-input:focus { border-color: var(--accent); }
+.settings-sub.error { color: var(--red); }
 .settings-state.ok {
   font-size: 11px;
   color: var(--green);

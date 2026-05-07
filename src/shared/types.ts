@@ -61,6 +61,15 @@ export interface GithubStatus {
   scopes?: string;
 }
 
+export interface HookInstallResult {
+  ok: boolean;
+  shell: 'powershell' | 'bash' | 'zsh';
+  profilePath?: string;
+  scriptPath?: string;
+  alreadyInstalled?: boolean;
+  message?: string;
+}
+
 export interface TerminalDiagnostic {
   platform: string;
   discovered: Array<{ name: string; path: string; sizeBytes: number; mtime: number }>;
@@ -131,6 +140,12 @@ export interface TrailAPI {
     diagnoseLinear: () => Promise<LinearStatus>;
     diagnoseTerminal: () => Promise<TerminalDiagnostic>;
     getHookInfo: () => Promise<{ port: number; psScriptPath: string; shScriptPath: string }>;
+    installShellHook: (shell: 'powershell' | 'bash' | 'zsh') => Promise<HookInstallResult>;
+    uninstallShellHook: (
+      shell: 'powershell' | 'bash' | 'zsh',
+      profilePath: string,
+    ) => Promise<HookInstallResult>;
+    suggestedShell: () => Promise<'powershell' | 'bash' | 'zsh'>;
   };
   app: {
     quit: () => void;

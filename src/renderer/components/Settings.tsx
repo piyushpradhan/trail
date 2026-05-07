@@ -26,6 +26,14 @@ export function Settings({ open, onClose }: Props): JSX.Element | null {
 
   // Shell hook
   const [hookInfo, setHookInfo] = useState<{ port: number; psScriptPath: string; shScriptPath: string } | null>(null);
+  const [hookShell, setHookShell] = useState<'powershell' | 'bash' | 'zsh'>('powershell');
+  const [hookInstalling, setHookInstalling] = useState(false);
+  const [hookInstallResult, setHookInstallResult] = useState<{
+    ok: boolean;
+    profilePath?: string;
+    alreadyInstalled?: boolean;
+    message?: string;
+  } | null>(null);
 
   // Linear-specific
   const [linearToken, setLinearToken] = useState('');
@@ -56,6 +64,9 @@ export function Settings({ open, onClose }: Props): JSX.Element | null {
       .catch(() => undefined);
     void Promise.resolve(window.trail.settings.getHookInfo?.())
       .then((s) => s && setHookInfo(s))
+      .catch(() => undefined);
+    void Promise.resolve(window.trail.settings.suggestedShell?.())
+      .then((s) => s && setHookShell(s))
       .catch(() => undefined);
     void Promise.resolve(window.trail.settings.diagnoseLinear?.())
       .then((s) => s && setLinearStatus(s))
@@ -168,6 +179,40 @@ export function Settings({ open, onClose }: Props): JSX.Element | null {
     }
   };
 
+  // ---- Shell hook install ----
+  const installHook = async () => {
+    setHookInstalling(true);
+    setHookInstallResult(null);
+    try {
+      const r = await window.trail.settings.installShellHook(hookShell);
+      setHookInstallResult({
+        ok: r.ok,
+        profilePath: r.profilePath,
+        alreadyInstalled: r.alreadyInstalled,
+        message: r.message,
+      });
+    } catch (err) {
+      setHookInstallResult({ ok: false, message: (err as Error).message });
+    } finally {
+      setHookInstalling(false);
+    }
+  };
+
+  const uninstallHook = async () => {
+    if (!hookInstallResult?.profilePath) return;
+    try {
+      const r = await window.trail.settings.uninstallShellHook(hookShell, hookInstallResult.profilePath);
+      setHookInstallResult({
+        ok: r.ok,
+        profilePath: r.profilePath,
+        alreadyInstalled: false,
+        message: r.message,
+      });
+    } catch (err) {
+      setHookInstallResult({ ok: false, message: (err as Error).message });
+    }
+  };
+
   // ---- Linear ----
   const saveLinearToken = async () => {
     if (!linearToken.trim()) return;
@@ -248,25 +293,59 @@ export function Settings({ open, onClose }: Props): JSX.Element | null {
               <span className="status-dot ok" /> Shell session hook
             </div>
             <div className="settings-sub">
-              Local listener on port {hookInfo?.port ?? '...'}. Source the script in your shell
-              profile to auto-create a task whenever you open a terminal.
+              Local listener on port {hookInfo?.port ?? '...'}. Sourcing the hook script from your
+              shell profile auto-creates a task whenever you open a new terminal, tagged with
+              repo + branch.
             </div>
-            <div className="settings-sub mono">
-              {hookInfo ? (
-                <>
-                  <strong>PowerShell:</strong> add to <code>$PROFILE</code>:
-                  {'\n'}. "{hookInfo.psScriptPath}"
-                  {'\n\n'}
-                  <strong>bash/zsh:</strong> add to ~/.bashrc or ~/.zshrc:
-                  {'\n'}source "{hookInfo.shScriptPath}"
-                </>
-              ) : (
-                'Loading…'
-              )}
+
+            <div className="settings-row">
+              <select
+                className="settings-input"
+                value={hookShell}
+                onChange={(e) => setHookShell(e.target.value as typeof hookShell)}
+              >
+                <option value="powershell">PowerShell ($PROFILE)</option>
+                <option value="bash">bash (~/.bashrc)</option>
+                <option value="zsh">zsh (~/.zshrc)</option>
+              </select>
+              <button
+                className="btn-primary"
+                onClick={() => void installHook()}
+                disabled={hookInstalling}
+              >
+                {hookInstalling ? 'Installing…' : 'Install'}
+              </button>
             </div>
+
+            {hookInstallResult && (
+              <>
+                <div className={`settings-sub ${hookInstallResult.ok ? '' : 'error'}`}>
+                  {hookInstallResult.alreadyInstalled
+                    ? '✓ Already installed.'
+                    : hookInstallResult.ok
+                      ? '✓ Installed.'
+                      : `✗ ${hookInstallResult.message}`}
+                </div>
+                {hookInstallResult.profilePath && (
+                  <div className="settings-sub mono">
+                    {hookInstallResult.profilePath}
+                  </div>
+                )}
+                {hookInstallResult.ok && (
+                  <div className="settings-row">
+                    <button className="btn-ghost" onClick={() => void uninstallHook()}>
+                      Uninstall
+                    </button>
+                    <span className="settings-sub">
+                      Restart your shell to activate. A backup was saved to <code>.trail.bak</code>.
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
+
             <div className="settings-sub">
-              The hook also exposes <code>trail-task &quot;title&quot;</code> for one-off tasks
-              from any shell.
+              Also exposes <code>trail-task &quot;title&quot;</code> for ad-hoc tasks from any shell.
             </div>
           </div>
 

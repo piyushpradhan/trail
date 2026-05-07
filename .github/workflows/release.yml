@@ -16,14 +16,18 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            artifact: 'dist/Trail-Setup-*.exe'
-            asset_name: trail-windows-x64-setup.exe
+            assets: |
+              dist/Trail-Setup-*.exe::trail-windows-x64-setup.exe
+              dist/latest.yml::latest.yml
           - os: macos-latest
-            artifact: 'dist/Trail-*.dmg'
-            asset_name: trail-macos-arm64.dmg
+            assets: |
+              dist/Trail-*-arm64.dmg::trail-macos-arm64.dmg
+              dist/Trail-*-x64.dmg::trail-macos-x64.dmg
+              dist/latest-mac.yml::latest-mac.yml
           - os: ubuntu-latest
-            artifact: 'dist/Trail-*.AppImage'
-            asset_name: trail-linux-x86_64.AppImage
+            assets: |
+              dist/Trail-*.AppImage::trail-linux-x86_64.AppImage
+              dist/latest-linux.yml::latest-linux.yml
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -46,29 +50,34 @@ jobs:
       - name: Package
         run: npm run package
         env:
-          # electron-builder reads these — leaving empty disables signing/notarization.
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
-      - name: Locate artifact
-        id: locate
+      - name: Stage artifacts
+        id: stage
         shell: bash
         run: |
           shopt -s nullglob
-          files=( ${{ matrix.artifact }} )
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "No artifact found matching: ${{ matrix.artifact }}"
-            ls -la dist/ || true
-            exit 1
-          fi
-          src="${files[0]}"
-          dst="dist/${{ matrix.asset_name }}"
-          cp "$src" "$dst"
-          echo "path=$dst" >> "$GITHUB_OUTPUT"
+          mkdir -p staging
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            src_pat="${line%%::*}"
+            dst_name="${line##*::}"
+            files=( $src_pat )
+            if [ ${#files[@]} -eq 0 ]; then
+              echo "::warning::No file matched $src_pat (skipping — file may be optional)"
+              continue
+            fi
+            src="${files[0]}"
+            cp "$src" "staging/$dst_name"
+            echo "  staged: $src -> staging/$dst_name"
+          done <<< "${{ matrix.assets }}"
+          echo "--- staged files ---"
+          ls -la staging/
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.asset_name }}
-          path: ${{ steps.locate.outputs.path }}
+          name: artifacts-${{ matrix.os }}
+          path: staging/*
           if-no-files-found: error
           retention-days: 14
 
@@ -92,7 +101,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="${GITHUB_REF#refs/tags/}"
-          # If release exists, upload assets. Otherwise create with auto-generated notes.
           if gh release view "$tag" >/dev/null 2>&1; then
             echo "Release $tag exists — uploading assets (clobber)"
             gh release upload "$tag" artifacts/* --clobber

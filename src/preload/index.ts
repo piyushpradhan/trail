@@ -45,9 +45,20 @@ const api: TrailAPI = {
     suggestedShell: () => ipcRenderer.invoke('settings:suggestedShell'),
     setOnboardingComplete: (v) => ipcRenderer.invoke('settings:setOnboardingComplete', v),
   },
+  updater: {
+    status: () => ipcRenderer.invoke('updater:status'),
+    check: () => ipcRenderer.invoke('updater:check'),
+    install: () => ipcRenderer.invoke('updater:install'),
+    onStatus: (cb) => {
+      const handler = (_e: unknown, s: unknown) => cb(s as Parameters<typeof cb>[0]);
+      ipcRenderer.on('updater:status', handler);
+      return () => ipcRenderer.removeListener('updater:status', handler);
+    },
+  },
   app: {
     quit: () => ipcRenderer.send('app:quit'),
     openExternal: (url) => ipcRenderer.send('app:openExternal', url),
+    version: () => ipcRenderer.invoke('app:version'),
   },
 };
 

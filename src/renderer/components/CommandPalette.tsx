@@ -63,6 +63,12 @@ export function CommandPalette({ open, onClose, onOpenSettings }: Props): JSX.El
       { id: 'stalled', label: 'Go to Stalled', group: 'Navigate', run: () => setFilter('stalled') },
       { id: 'all', label: 'Go to All', group: 'Navigate', run: () => setFilter('all') },
       { id: 'done', label: 'Go to Done', group: 'Navigate', run: () => setFilter('done') },
+      {
+        id: 'check-updates',
+        label: 'Check for updates',
+        group: 'Action',
+        run: () => window.trail.updater.check().then(() => undefined),
+      },
       { id: 'quit', label: 'Quit Trail', group: 'Action', run: () => window.trail.app.quit() },
     ];
 

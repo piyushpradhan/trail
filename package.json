@@ -1,13 +1,13 @@
 {
   "name": "trail",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Menubar task tracker. Collects signals from GitHub/Slack/tmux/AI sessions and keeps you honest.",
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "start": "electron-vite preview",
-    "package": "electron-vite build && electron-builder",
+    "package": "electron-vite build && electron-builder --publish never",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -16,6 +16,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.0",
     "electron-store": "^8.2.0",
+    "electron-updater": "^6.3.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sql.js": "^1.11.0",
@@ -38,7 +39,14 @@
   "build": {
     "appId": "dev.piyush.trail",
     "productName": "Trail",
-    "publish": null,
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "piyushpradhan",
+        "repo": "trail",
+        "releaseType": "release"
+      }
+    ],
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -53,7 +61,7 @@
     "mac": {
       "category": "public.app-category.productivity",
       "target": [
-        { "target": "dmg", "arch": ["arm64"] }
+        { "target": "dmg", "arch": ["arm64", "x64"] }
       ]
     },
     "win": {

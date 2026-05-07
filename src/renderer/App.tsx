@@ -5,6 +5,7 @@ import { CommandPalette } from './components/CommandPalette';
 import { Settings } from './components/Settings';
 import { Activity } from './components/Activity';
 import { Onboarding } from './components/Onboarding';
+import { UpdateBanner } from './components/UpdateBanner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { RefreshIcon, PlusIcon, SettingsIcon } from './icons';
 
@@ -154,6 +155,8 @@ export function App(): JSX.Element {
           filtered.map((t) => <TaskItem key={t.id} task={t} />)
         )}
       </div>
+
+      <UpdateBanner />
 
       <footer className="footer">
         <span>{tasks.length} total</span>

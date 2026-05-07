@@ -536,6 +536,30 @@ input, textarea {
 .status-dot.error { background: var(--red); }
 .status-dot.unknown { background: var(--text-faint); }
 
+/* Update banner */
+.update-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  font-size: 11px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+.update-banner.info { color: var(--text-muted); }
+.update-banner.ready { color: var(--green); background: rgba(76, 183, 130, 0.06); }
+.update-banner.error { color: var(--red); background: rgba(235, 87, 87, 0.06); }
+.update-banner-spacer {
+  margin-left: auto;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+.update-banner-btn {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
 /* Onboarding */
 .onboarding {
   width: 92%;

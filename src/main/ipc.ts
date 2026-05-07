@@ -7,6 +7,7 @@ import { diagnoseLinear } from './collectors/linear.js';
 import { diagnoseTerminal } from './collectors/terminal.js';
 import { HOOK_PORT } from './hookServer.js';
 import { installShellHook, uninstallShellHook, suggestedShell, type InstallShell } from './installHook.js';
+import { checkForUpdatesManual, getUpdateStatus, quitAndInstall } from './updater.js';
 import { join } from 'node:path';
 import { settings } from './settings.js';
 import type { Task, TaskInput, TaskStatus } from '@shared/types';
@@ -137,6 +138,11 @@ export function registerIpc(onChange: () => void): void {
       shScriptPath: join(base, 'trail-hook.sh'),
     };
   });
+
+  ipcMain.handle('updater:status', () => getUpdateStatus());
+  ipcMain.handle('updater:check', () => checkForUpdatesManual());
+  ipcMain.handle('updater:install', () => quitAndInstall());
+  ipcMain.handle('app:version', () => app.getVersion());
 
   ipcMain.on('app:quit', () => app.quit());
   ipcMain.on('app:openExternal', (_e, url: string) => {

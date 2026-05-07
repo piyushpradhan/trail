@@ -45,6 +45,15 @@ export interface ActivityEvent {
   ts: number;
 }
 
+export type UpdateStatus =
+  | { kind: 'idle' }
+  | { kind: 'checking' }
+  | { kind: 'available'; info: { version: string; releaseDate?: string; releaseNotes?: string } }
+  | { kind: 'not-available'; currentVersion: string }
+  | { kind: 'downloading'; percent: number; transferred: number; total: number }
+  | { kind: 'downloaded'; version: string }
+  | { kind: 'error'; message: string };
+
 export interface ReconcileResult {
   attempted: number;
   created: number;
@@ -124,6 +133,17 @@ export interface TrailAPI {
   events: {
     recent: (limit?: number) => Promise<ActivityEvent[]>;
   };
+  updater: {
+    status: () => Promise<UpdateStatus>;
+    check: () => Promise<UpdateStatus>;
+    install: () => Promise<void>;
+    onStatus: (cb: (s: UpdateStatus) => void) => () => void;
+  };
+  app: {
+    quit: () => void;
+    openExternal: (url: string) => void;
+    version: () => Promise<string>;
+  };
   settings: {
     get: () => Promise<SettingsSnapshot>;
     setApiKey: (key: string) => Promise<void>;
@@ -148,10 +168,6 @@ export interface TrailAPI {
     ) => Promise<HookInstallResult>;
     suggestedShell: () => Promise<'powershell' | 'bash' | 'zsh'>;
     setOnboardingComplete: (v: boolean) => Promise<void>;
-  };
-  app: {
-    quit: () => void;
-    openExternal: (url: string) => void;
   };
 }
 

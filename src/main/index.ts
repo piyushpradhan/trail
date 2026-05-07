@@ -8,6 +8,7 @@ import { runReconciler } from './reconciler.js';
 import { settings } from './settings.js';
 import { checkNudges } from './nudge.js';
 import { startHookServer, stopHookServer } from './hookServer.js';
+import { initUpdater } from './updater.js';
 
 const isDev = !app.isPackaged;
 const POPOVER_WIDTH = 380;
@@ -73,6 +74,7 @@ if (!gotLock) {
     tray.init(popover);
     registerIpc(notifyChange);
     startHookServer(notifyChange);
+    initUpdater(popover);
 
     const registered = globalShortcut.register(TOGGLE_HOTKEY, () => tray.toggle());
     if (!registered) {

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Task, TaskStatus } from '@shared/types';
+import type { Task, TaskStatus, TaskSource } from '@shared/types';
 
 interface State {
   tasks: Task[];
@@ -7,6 +7,11 @@ interface State {
   syncing: boolean;
   filter: 'today' | 'all' | 'stalled' | 'done' | 'activity';
   setFilter: (f: State['filter']) => void;
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  sourceFilter: Set<TaskSource>;
+  toggleSourceFilter: (s: TaskSource) => void;
+  clearSourceFilter: () => void;
   refresh: () => Promise<void>;
   sync: () => Promise<void>;
   add: (title: string) => Promise<void>;
@@ -21,8 +26,22 @@ export const useStore = create<State>((set, get) => ({
   loading: true,
   syncing: false,
   filter: 'today',
+  searchQuery: '',
+  sourceFilter: new Set(),
 
   setFilter: (filter) => set({ filter }),
+
+  setSearchQuery: (searchQuery) => set({ searchQuery }),
+
+  toggleSourceFilter: (s) =>
+    set((state) => {
+      const next = new Set(state.sourceFilter);
+      if (next.has(s)) next.delete(s);
+      else next.add(s);
+      return { sourceFilter: next };
+    }),
+
+  clearSourceFilter: () => set({ sourceFilter: new Set() }),
 
   refresh: async () => {
     const tasks = await window.trail.tasks.list();
@@ -67,28 +86,68 @@ export const useStore = create<State>((set, get) => ({
   },
 }));
 
-export function selectFiltered(s: State): Task[] {
-  const now = Date.now();
-  switch (s.filter) {
+interface FilterArgs {
+  tasks: Task[];
+  filter: State['filter'];
+  searchQuery?: string;
+  sourceFilter?: Set<TaskSource> | ReadonlySet<TaskSource>;
+  now?: number;
+}
+
+export function selectFiltered({
+  tasks,
+  filter,
+  searchQuery = '',
+  sourceFilter,
+  now = Date.now(),
+}: FilterArgs): Task[] {
+  let scoped: Task[];
+  switch (filter) {
     case 'today':
-      return s.tasks.filter(
+      scoped = tasks.filter(
         (t) => t.status !== 'done' && (t.snoozedUntil == null || t.snoozedUntil < now),
       );
+      break;
     case 'stalled': {
       const sixHours = 6 * 3600_000;
-      return s.tasks.filter(
+      scoped = tasks.filter(
         (t) =>
           (t.status === 'todo' || t.status === 'in_progress') &&
           (t.snoozedUntil == null || t.snoozedUntil < now) &&
           t.lastTouchedAt < now - sixHours,
       );
+      break;
     }
     case 'done':
-      return s.tasks.filter((t) => t.status === 'done');
+      scoped = tasks.filter((t) => t.status === 'done');
+      break;
     case 'all':
-      return s.tasks;
+      scoped = tasks;
+      break;
     case 'activity':
     default:
       return [];
   }
+
+  if (sourceFilter && sourceFilter.size > 0) {
+    scoped = scoped.filter((t) => sourceFilter.has(t.source));
+  }
+
+  const q = searchQuery.trim().toLowerCase();
+  if (q) {
+    scoped = scoped.filter(
+      (t) =>
+        t.title.toLowerCase().includes(q) ||
+        t.tags.some((tag) => tag.toLowerCase().includes(q)) ||
+        (t.notes ?? '').toLowerCase().includes(q),
+    );
+  }
+
+  return scoped;
+}
+
+export function sourceCounts(tasks: Task[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const t of tasks) out[t.source] = (out[t.source] ?? 0) + 1;
+  return out;
 }

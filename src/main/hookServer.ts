@@ -3,7 +3,14 @@ import { tasksRepo, eventsRepo } from './db.js';
 import { randomUUID } from 'node:crypto';
 import { app } from 'electron';
 
-export const HOOK_PORT = 47123;
+export const DEFAULT_HOOK_PORT = 47123;
+export const HOOK_PORT =
+  parseInt(process.env['TRAIL_HOOK_PORT'] ?? '', 10) || DEFAULT_HOOK_PORT;
+
+let activePort = HOOK_PORT;
+export function getActivePort(): number {
+  return activePort;
+}
 
 interface SessionStartBody {
   shell?: string;
@@ -94,8 +101,9 @@ async function handleEnd(body: SessionStartBody & { exitCode?: number }): Promis
 
 let server: ReturnType<typeof createServer> | null = null;
 
-export function startHookServer(onChange: () => void): void {
-  if (server) return;
+export function startHookServer(onChange: () => void, port: number = HOOK_PORT): Promise<number> {
+  if (server) return Promise.resolve(activePort);
+  activePort = port;
   server = createServer((req, res) => {
     if (req.method === 'OPTIONS') return send(res, 204, {});
 
@@ -148,12 +156,23 @@ export function startHookServer(onChange: () => void): void {
     send(res, 404, { error: 'not found' });
   });
 
-  server.listen(HOOK_PORT, '127.0.0.1', () => {
-    eventsRepo.log('hookServer.started', { port: HOOK_PORT });
-  });
-
-  server.on('error', (err) => {
-    eventsRepo.log('hookServer.error', { message: err.message });
+  return new Promise<number>((resolve, reject) => {
+    server!.once('error', (err: NodeJS.ErrnoException) => {
+      eventsRepo.log('hookServer.error', { message: err.message, code: err.code, port });
+      // Surface bind errors so tests / launchers know the server didn't actually start
+      reject(err);
+    });
+    server!.listen(port, '127.0.0.1', () => {
+      // Re-attach a non-rejecting error handler for runtime errors after listen succeeded
+      server!.removeAllListeners('error');
+      server!.on('error', (err) => {
+        eventsRepo.log('hookServer.error', { message: err.message });
+      });
+      const addr = server!.address();
+      if (addr && typeof addr === 'object') activePort = addr.port;
+      eventsRepo.log('hookServer.started', { port: activePort });
+      resolve(activePort);
+    });
   });
 }
 

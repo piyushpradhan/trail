@@ -13,7 +13,7 @@ import { runCodexCollector } from '../src/main/collectors/codex.js';
 import { runOpencodeCollector } from '../src/main/collectors/opencode.js';
 import { runTerminalCollector } from '../src/main/collectors/terminal.js';
 import { runTmuxCollector } from '../src/main/collectors/tmux.js';
-import { startHookServer, stopHookServer, HOOK_PORT } from '../src/main/hookServer.js';
+import { startHookServer, stopHookServer } from '../src/main/hookServer.js';
 import { diagnoseTerminal } from '../src/main/collectors/terminal.js';
 
 const ENABLED = process.env.RUN_PROOF === '1';
@@ -108,8 +108,10 @@ d('PROOF — collectors run against real user data', () => {
 });
 
 d('PROOF — shell-hook HTTP endpoint creates session tasks', () => {
-  beforeAll(() => {
-    startHookServer(() => undefined);
+  let proofUrl: string;
+  beforeAll(async () => {
+    const port = await startHookServer(() => undefined, 0);
+    proofUrl = `http://127.0.0.1:${port}`;
   });
 
   it('opening a new shell pings /session/start and a task appears', async () => {
@@ -118,7 +120,7 @@ d('PROOF — shell-hook HTTP endpoint creates session tasks', () => {
 
     // Simulate two shell windows opening + one closing
     const start = (body: object) =>
-      fetch(`http://127.0.0.1:${HOOK_PORT}/session/start`, {
+      fetch(`${proofUrl}/session/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

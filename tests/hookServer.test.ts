@@ -1,12 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { initDb, getDb, tasksRepo } from '../src/main/db.js';
-import { startHookServer, stopHookServer, sessionKey, deriveTitle, HOOK_PORT } from '../src/main/hookServer.js';
+import { startHookServer, stopHookServer, sessionKey, deriveTitle } from '../src/main/hookServer.js';
+
+let URL: string;
 
 beforeAll(async () => {
   await initDb();
-  startHookServer(() => undefined);
-  // tiny wait to let listen complete
-  await new Promise((r) => setTimeout(r, 50));
+  // Use port 0 so the OS picks a free port — avoids colliding with a live Trail process.
+  const port = await startHookServer(() => undefined, 0);
+  URL = `http://127.0.0.1:${port}`;
 });
 
 afterAll(() => {
@@ -18,7 +20,6 @@ beforeEach(() => {
   getDb().run('DELETE FROM events');
 });
 
-const URL = `http://127.0.0.1:${HOOK_PORT}`;
 
 describe('sessionKey', () => {
   it('combines host shell pid cwd', () => {

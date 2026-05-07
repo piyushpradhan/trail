@@ -74,7 +74,7 @@ if (!gotLock) {
     tray = new TrayController();
     tray.init(popover);
     registerIpc(notifyChange);
-    startHookServer(notifyChange);
+    void startHookServer(notifyChange).catch(() => undefined);
     startWatchers(notifyChange);
     initUpdater(popover);
 

@@ -6,7 +6,7 @@ import { diagnoseGithub } from './collectors/github.js';
 import { diagnoseLinear } from './collectors/linear.js';
 import { diagnoseSlack } from './collectors/slack.js';
 import { diagnoseTerminal } from './collectors/terminal.js';
-import { HOOK_PORT } from './hookServer.js';
+import { getActivePort } from './hookServer.js';
 import { installShellHook, uninstallShellHook, suggestedShell, type InstallShell } from './installHook.js';
 import { checkForUpdatesManual, getUpdateStatus, quitAndInstall } from './updater.js';
 import { join } from 'node:path';
@@ -143,7 +143,7 @@ export function registerIpc(onChange: () => void): void {
       ? join(process.resourcesPath, 'hooks')
       : join(app.getAppPath(), 'resources', 'hooks');
     return {
-      port: HOOK_PORT,
+      port: getActivePort(),
       psScriptPath: join(base, 'trail-hook.ps1'),
       shScriptPath: join(base, 'trail-hook.sh'),
     };

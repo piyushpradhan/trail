@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useStore, selectFiltered } from './store';
+import { useStore, selectFiltered, sourceCounts } from './store';
 import { TaskItem } from './components/TaskItem';
 import { CommandPalette } from './components/CommandPalette';
 import { Settings } from './components/Settings';
@@ -42,7 +42,18 @@ export function App(): JSX.Element {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
 
-  const filtered = useMemo(() => selectFiltered({ tasks, filter } as any), [tasks, filter]);
+  const searchQuery = useStore((s) => s.searchQuery);
+  const setSearchQuery = useStore((s) => s.setSearchQuery);
+  const sourceFilter = useStore((s) => s.sourceFilter);
+  const toggleSourceFilter = useStore((s) => s.toggleSourceFilter);
+  const clearSourceFilter = useStore((s) => s.clearSourceFilter);
+
+  const filtered = useMemo(
+    () => selectFiltered({ tasks, filter, searchQuery, sourceFilter }),
+    [tasks, filter, searchQuery, sourceFilter],
+  );
+
+  const sourceCountMap = useMemo(() => sourceCounts(tasks), [tasks]);
 
   useEffect(() => {
     void refresh();
@@ -63,13 +74,23 @@ export function App(): JSX.Element {
       if (meta && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setPaletteOpen((v) => !v);
+      } else if (meta && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        const input = document.querySelector<HTMLInputElement>('.search-input');
+        input?.focus();
+        input?.select();
       } else if (e.key === 'Escape' && !paletteOpen) {
-        window.dispatchEvent(new CustomEvent('trail:hide'));
+        if (searchQuery || sourceFilter.size > 0) {
+          setSearchQuery('');
+          clearSourceFilter();
+        } else {
+          window.dispatchEvent(new CustomEvent('trail:hide'));
+        }
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [paletteOpen]);
+  }, [paletteOpen, searchQuery, sourceFilter, setSearchQuery, clearSourceFilter]);
 
   const counts = useMemo(() => {
     const now = Date.now();
@@ -135,21 +156,61 @@ export function App(): JSX.Element {
         <PlusIcon />
         <input
           className="quick-add-input"
-          placeholder="Add a task…"
+          placeholder="Add a task… (or search with ⌘F)"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           autoFocus
         />
       </form>
 
+      {filter !== 'activity' && (
+        <div className="filter-bar">
+          <input
+            className="search-input"
+            placeholder="Filter…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button className="filter-clear" onClick={() => setSearchQuery('')}>
+              ×
+            </button>
+          )}
+          <div className="source-chips">
+            {Object.entries(sourceCountMap)
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 6)
+              .map(([source, n]) => (
+                <button
+                  key={source}
+                  className={`source-chip-toggle source-chip ${source} ${
+                    sourceFilter.has(source as never) ? 'active' : ''
+                  }`}
+                  onClick={() => toggleSourceFilter(source as never)}
+                >
+                  {source}
+                  <span className="count">{n}</span>
+                </button>
+              ))}
+            {sourceFilter.size > 0 && (
+              <button className="source-chip-clear" onClick={clearSourceFilter}>
+                clear
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="list">
         {filter === 'activity' ? (
           <Activity active={true} />
         ) : filtered.length === 0 ? (
           <div className="empty">
-            {filter === 'today'
-              ? 'Nothing on your plate. Sync or add a task.'
-              : `No ${filter} tasks.`}
+            {searchQuery || sourceFilter.size > 0
+              ? `No tasks match.`
+              : filter === 'today'
+                ? 'Nothing on your plate. Sync or add a task.'
+                : `No ${filter} tasks.`}
           </div>
         ) : (
           filtered.map((t) => <TaskItem key={t.id} task={t} />)
